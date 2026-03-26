@@ -14,27 +14,29 @@ def mod2div(dividend, divisor):
 
     return dividend[-(n-1):]
 
-def encode_crc(m, g):
+# a(x) = m(x)*x^r + c(x)
+def encode(m, g):
     r = len(g) - 1
     padded = m + [0]*r
     remainder = mod2div(padded, g)
     return m + remainder
 
-def simulate(g, k, p, eps):
-    r = len(g) - 1
-    n = k + r
+def count_Pe(g, k, p, eps):
+    Ne = 0 # счетчик ошибок декодирования
 
-    N = int(9/(4*eps**2))
-    Ne = 0
+    r = len(g) - 1 # deg(g(x))
+    n = k + r # вычисление длины кодового слова
+    
+    N = int(9/(4*eps**2)) # количество экспериментов
 
     for _ in range(N):
-        # сообщение
+        # генерация случайного сообщения
         m = [random.randint(0,1) for _ in range(k)]
 
-        # кодирование
-        a = encode_crc(m, g)
+        # формирование кодового слова 
+        a = encode(m, g)
 
-        # ошибки
+        # генерация случайного вектора ошибок. P(1) = p. P(0) = 1 - p. 
         e = []
         for _ in range(n):
             if random.random() < p:
@@ -42,24 +44,25 @@ def simulate(g, k, p, eps):
             else:
                 e.append(0)
 
-        # канал
+        # вычисление выхода канала b
         b = xor(a, e)
 
-        # синдром
+        # вычисление синдрома
         s = mod2div(b, g)
 
-        if all(x == 0 for x in s) and any(x == 1 for x in e):
+        if sum(s) == 0 and sum(e) != 0:
             Ne += 1
 
     Pe = Ne / N
     return Pe
 
-# пример
-g = [1,0,1,1]     # g(x)=x^3+x+1
-k = 8
-p = 0.05
-eps = 0.01
+g = [1, 0, 1, 1]  # g(x)=x^3+x+1
+k = 4             # длина кодируемой последовательности
+p = 0.05          # вероятность ошибки в канале
+eps = 0.01        # требуемая точность результатов
 
-Pe = simulate(g, k, p, eps)
+Pe = count_Pe(g, k, p, eps)
 
-print("Вероятность ошибки декодирования:", Pe)
+print("Pe:", Pe)
+
+# print(mod2div([1, 0, 1, 0, 0, 0, 0], [1, 0, 1, 1]))
