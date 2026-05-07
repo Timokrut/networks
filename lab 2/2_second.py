@@ -1,19 +1,31 @@
 import random
 
-def experiment(p, n):
-    for i in range(1, n + 1):
-        if random.random() > p:  # успех
-            return i
-    return n  # если все попытки неудачны
-
-def simulate(p, n, trials=100000):
-    total = 0
-    for _ in range(trials):
-        total += experiment(p, n)
-    return total / trials
-
-# пример
 p = 0.3
-n = 5
-print("Теория:", (1 - p**n) / (1 - p))
-print("Имитация:", simulate(p, n))
+n = 3
+
+messages = 1000
+
+total_transmissions = 0
+
+for _ in range(messages):
+    attempts = 0
+
+    for _ in range(n):
+        attempts += 1
+        r = random.random()
+
+        # успешная передача
+        if r > p:
+            break
+
+    total_transmissions += attempts
+
+average = total_transmissions / messages
+
+theory = (1 - p**n) / (1 - p)
+
+print("p =", p)
+print("n =", n)
+
+print("Имитационное среднее =", average)
+print("Теоретическое значение =", theory)

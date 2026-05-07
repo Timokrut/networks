@@ -1,18 +1,21 @@
 import random
 
-p = 0.2     
+p = 0.2
 p_back = 0.1
+
+n = 3
 
 messages = 1000
 
 total_transmissions = 0
+lost = 0
 
 for msg_id in range(messages):
     attempts = 0
-    
-    while True:
+
+    for _ in range(n):
         attempts += 1
-        
+
         data_ok = random.random() > p
         ack_ok = random.random() > p_back
 
@@ -22,7 +25,9 @@ for msg_id in range(messages):
     total_transmissions += attempts
 
 average = total_transmissions / messages
-theory = 1 / ((1 - p) * (1 - p_back))
 
-print("Имитация =", average)
+a = (1 - p) * (1 - p_back)
+theory = (1 - (1 - a)**n) / a
+
+print("Имитация среднего =", average)
 print("Теория =", theory)
