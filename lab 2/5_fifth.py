@@ -1,57 +1,56 @@
 import random
+import logging
 
-def simulate(p, tau, packets=10000):
-    total_time = 0
-    successful_packets = 0
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(message)s"
+)
 
-    for _ in range(packets):
-        while True:
-            # время передачи пакета = 1
-            total_time += 1
+# Сброс цвета
+RESET = "\033[0m"
 
-            # проверка ошибки
-            if random.random() > p:
-                # пакет доставлен успешно
-                total_time += tau  # ожидание квитанции
-                successful_packets += 1
-                break
-            # иначе повторная передача (ничего не добавляем кроме времени передачи)
+# Цвета
+BLUE   = "\033[94m"
+RED    = "\033[91m"
+GREEN  = "\033[92m"
 
-    return successful_packets / total_time
+p = 0.3
+tau = 2
+messages = 1000
 
+t = 0
+i = 1
 
-def theoretical_eta(p, tau):
-    return (1 - p) / (1 + p * tau)
+# packet_id, time_sent, success
+in_flight = []
 
+while i <= messages or len(in_flight) != 0:
+    if i <= messages:
+        r = random.random()
+        in_flight.append((i, t, r > p))
+        logging.info(f"[t={t}] {BLUE}SEND{RESET} packet {i}")
+        i += 1
 
-# пример запуска
-p = 0.2
-tau = 3
+    ready = [pkt for pkt in in_flight if pkt[1] + tau <= t]
 
-sim_eta = simulate(p, tau)
-theory_eta = theoretical_eta(p, tau)
+    for pkt in ready:
+        pid, send_time, success = pkt
 
-print("Моделирование η =", sim_eta)
-print("Теория        η =", theory_eta)
+        if success:
+            logging.info(f"[t={t + 1}] {GREEN}SUCCESS{RESET} packet {pid}")
+            in_flight.remove(pkt)
 
-# ЛОГИ
-def simulate_with_log(p, tau, packets=3):
-    time = 0
+        else:
+            logging.info(f"[t={t + 1}] {RED}ERROR{RESET} packet {pid}")
+            in_flight.clear()
+            i = pid
+    
+    t += 1
 
-    for i in range(packets):
-        print(f"\nПакет {i+1}:")
+n_sim = messages / t
+n_theory = (1 - p) / (1 + p * tau)
 
-        while True:
-            time += 1
-            print(f"  t={time}: передача пакета")
-
-            if random.random() > p:
-                print(f"  t={time}: пакет принят успешно")
-                time += tau
-                print(f"  t={time}: ожидание квитанции τ={tau}")
-                print(f"  t={time}: квитанция получена")
-                break
-            else:
-                print(f"  t={time}: ошибка, повтор")
-
-    return time
+print("p =", p)
+print("tau =", tau)
+print(f"Имитация η = {n_sim}")
+print(f"Теория η = {n_theory}")

@@ -1,57 +1,51 @@
 import random
+import logging
 
-def simulate(p, tau, T_total=100000):
-    time = 0
-    useful_time = 0
-    successful = 0
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(message)s"
+)
 
-    while time < T_total:
-        # передача кадра
-        time += 1
-        
-        if random.random() < p:
-            # ошибка → повтор
-            time += tau
+# Сброс цвета
+RESET = "\033[0m"
+
+# Цвета
+BLUE   = "\033[94m"
+YELLOW = "\033[93m"
+RED    = "\033[91m"
+GREEN  = "\033[92m"
+
+p = 0.3        # ошибка прямого канала
+tau = 2        # задержка ACK
+messages = 1000
+
+t = 0
+
+for i in range(1, messages + 1):
+    attempts = 0
+
+    while True:
+        attempts += 1
+        r = random.random()
+
+        logging.info(f"[t={t}] {BLUE}SEND{RESET} packet {i}, attempt {attempts}")
+
+        t += 1
+
+        logging.info(f"[t={t}] {YELLOW}WAIT{RESET} for ACK tau={tau}")
+
+        if r > p:
+            t += tau
+            logging.info(f"[t={t}] {GREEN}SUCCESS{RESET} packet {i}")
+            break
         else:
-            # успех
-            time += tau
-            useful_time += 1
-            successful += 1
+            t += tau
+            logging.info(f"[t={t}] {RED}ERROR{RESET} packet {i}")
 
-    eta = useful_time / time
-    return eta
+n_sim = messages / t
+n_theory = (1 - p) / (1 + tau)
 
-# тест
-p = 0.2
-tau = 2
-
-eta_sim = simulate(p, tau)
-eta_theory = (1 - p) / (1 + tau)
-
-print("Моделирование:", eta_sim)
-print("Теория:", eta_theory)
-
-
-# import random
-
-# def simulate(p, tau, N=5):
-#     time = 0
-
-#     for frame in range(1, N+1):
-#         print(f"\nt={time}: отправка кадра #{frame}")
-#         time += 1
-
-#         while True:
-#             if random.random() < p:
-#                 print(f"t={time}: ошибка (кадр #{frame})")
-#                 time += tau
-#                 print(f"t={time}: повтор кадра #{frame}")
-#                 time += 1
-#             else:
-#                 print(f"t={time}: успех, ACK получен")
-#                 time += tau
-#                 break
-
-#     print("\nИтоговое время:", time)
-
-# simulate(p=0.3, tau=2)
+print("p =", p)
+print("tau =", tau)
+print(f"Имитация η = {n_sim:.2f}")
+print(f"Теория η = {n_theory:.2f}")
