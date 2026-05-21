@@ -25,6 +25,6 @@ average = total_transmissions / messages
 # теоретическое значение
 theory = 1 / (1 - p)
 
-print("Вероятность ошибки p =", p)
-print("Имитационное среднее =", average)
-print("Теоретическое значение =", theory)
+print(f"Вероятность ошибки p = {p}")
+print(f"Имитационное среднее = {average:.2f}")
+print(f"Теоретическое значение ={theory:.2f}")

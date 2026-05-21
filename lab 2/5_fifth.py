@@ -14,9 +14,11 @@ BLUE   = "\033[94m"
 RED    = "\033[91m"
 GREEN  = "\033[92m"
 
+random.seed(2)
+
 p = 0.3
 tau = 2
-messages = 1000
+messages = 5
 
 t = 0
 i = 1
@@ -50,7 +52,7 @@ while i <= messages or len(in_flight) != 0:
 n_sim = messages / t
 n_theory = (1 - p) / (1 + p * tau)
 
-print("p =", p)
-print("tau =", tau)
-print(f"Имитация η = {n_sim}")
-print(f"Теория η = {n_theory}")
+print(f"p = {p}")
+print(f"tau = {tau}")
+print(f"Имитация η = {n_sim:.2f}")
+print(f"Теория η = {n_theory:.2f}")

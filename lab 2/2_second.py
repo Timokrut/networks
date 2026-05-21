@@ -24,8 +24,7 @@ average = total_transmissions / messages
 
 theory = (1 - p**n) / (1 - p)
 
-print("p =", p)
-print("n =", n)
-
-print("Имитационное среднее =", average)
-print("Теоретическое значение =", theory)
+print(f"p = {p}")
+print(f"n = {n}")
+print(f"Имитационное среднее = {average:.2f}")
+print(f"Теоретическое значение = {theory:.2f}")

@@ -15,9 +15,11 @@ YELLOW = "\033[93m"
 RED    = "\033[91m"
 GREEN  = "\033[92m"
 
+random.seed(1)
+
 p = 0.3        # ошибка прямого канала
 tau = 2        # задержка ACK
-messages = 1000
+messages = 3
 
 t = 0
 
@@ -45,7 +47,7 @@ for i in range(1, messages + 1):
 n_sim = messages / t
 n_theory = (1 - p) / (1 + tau)
 
-print("p =", p)
-print("tau =", tau)
+print(f"p = {p}")
+print(f"tau = {tau}")
 print(f"Имитация η = {n_sim:.2f}")
 print(f"Теория η = {n_theory:.2f}")

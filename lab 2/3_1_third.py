@@ -10,7 +10,7 @@ messages = 1000
 total_transmissions = 0
 lost = 0
 
-for msg_id in range(messages):
+for _ in range(messages):
     attempts = 0
 
     for _ in range(n):
@@ -29,5 +29,8 @@ average = total_transmissions / messages
 a = (1 - p) * (1 - p_back)
 theory = (1 - (1 - a)**n) / a
 
-print("Имитация среднего =", average)
-print("Теория =", theory)
+print(f"p = {p}")
+print(f"p_обр = {p_back}")
+print(f"n = {n}")
+print(f"Имитация среднего = {average:.2f}")
+print(f"Теория = {theory:.2f}")
