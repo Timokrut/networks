@@ -32,8 +32,10 @@ def generate_arrivals(lmbd, m, slots):
     return arrivals
 
 
-# Симулируем ALOHA p и ALOHA 1 + p
-def simulate_aloha(arrivals, p, slots, first_attempt_guaranteed=False):
+# Симулируем ALOHA p, ALOHA 1 + p и экспериментальную схему
+def simulate_aloha(
+    arrivals, p, slots, first_attempt_guaranteed=False, experimental=False
+):
     m = len(arrivals)
     queues = [deque() for _ in range(m)]
     next_arrival = [0] * m
@@ -53,13 +55,16 @@ def simulate_aloha(arrivals, p, slots, first_attempt_guaranteed=False):
             if not queues[user]:
                 continue
 
-            first_try = not queues[user][0][1]
+            collisions = queues[user][0][1]
+            first_try = collisions == 0
 
-            if first_attempt_guaranteed and first_try:
+            if (first_attempt_guaranteed or experimental) and first_try:
                 trying.append(user)
-            
-            elif random.random() < p:
-                trying.append(user)
+            else:
+                # После конфликтов: 1/2, 1/3, ..., 1/M, 1/M, ...
+                attempt_p = 1 / min(collisions + 1, m) if experimental else p
+                if random.random() < attempt_p:
+                    trying.append(user)
 
         # Один пользователь передает -> Успех
         if len(trying) == 1:
@@ -71,16 +76,16 @@ def simulate_aloha(arrivals, p, slots, first_attempt_guaranteed=False):
 
         # Более одного пользователя передают -> Конфликт
         elif len(trying) > 1:
-            if first_attempt_guaranteed:
-                for user in trying:
-                    queues[user][0][1] = True
+            for user in trying:
+                queues[user][0][1] += 1
 
         # Добавляем сообщения, пришедшие в течение этого слота.
         for user in range(m):
             while (next_arrival[user] < len(arrivals[user]) and
                    arrivals[user][next_arrival[user]] < slot + 1):
                 arrival_time = arrivals[user][next_arrival[user]]
-                queues[user].append([arrival_time, False])
+                # [момент поступления, число конфликтов сообщения]
+                queues[user].append([arrival_time, 0])
                 next_arrival[user] += 1
 
     average_delay = sum(delays) / len(delays) if delays else 0 # d(y) - средняя задержка
@@ -192,6 +197,9 @@ def main():
     number_1_p = []
     output_p = []
     output_1_p = []
+    delay_experimental = []
+    number_experimental = []
+    output_experimental = []
 
     # Генерируем каждый поток
     all_arrivals = []
@@ -216,16 +224,31 @@ def main():
         number_1_p.append(n)
         output_1_p.append(out)
 
+    # Экспериментальная ALOHA
+    for arrivals in all_arrivals:
+        d, n, out = simulate_aloha(
+            arrivals, p, SLOTS, experimental=True
+        )
+        delay_experimental.append(d)
+        number_experimental.append(n)
+        output_experimental.append(out)
+
     check()
 
-    print("\nλ | λвых ALOHA p | λвых ALOHA 1+p")
+    experimental_label = "ALOHA 1, 1/2, ..., 1/M"
+
+    print("\nλ | λвых ALOHA p | λвых ALOHA 1+p | λвых экспериментальной ALOHA")
     for i, lmbd in enumerate(lambdas):
-        print(f"{lmbd:.2f} | {output_p[i]:.2f} | {output_1_p[i]:.2f}")
+        print(
+            f"{lmbd:.2f} | {output_p[i]:.3f} | {output_1_p[i]:.3f} | "
+            f"{output_experimental[i]:.3f}"
+        )
 
     # График средней задержки
     plt.figure()
     plt.plot(lambdas, delay_p, "o-", label="ALOHA p")
     plt.plot(lambdas, delay_1_p, "o-", label="ALOHA 1 + p")
+    plt.plot(lambdas, delay_experimental, "^-", label=experimental_label)
     plt.xlabel("λ")
     plt.ylabel("Средняя задержка d(λ)")
     plt.title("Средняя задержка")
@@ -236,6 +259,7 @@ def main():
     plt.figure()
     plt.plot(lambdas, number_p, "o-", label="ALOHA p")
     plt.plot(lambdas, number_1_p, "o-", label="ALOHA 1 + p")
+    plt.plot(lambdas, number_experimental, "^-", label=experimental_label)
     plt.xlabel("λ")
     plt.ylabel("Среднее число сообщений N(λ)")
     plt.title("Среднее число сообщений в системе")
@@ -246,6 +270,7 @@ def main():
     plt.figure()
     plt.plot(lambdas, output_p, "o-", label="ALOHA p")
     plt.plot(lambdas, output_1_p, "o-", label="ALOHA 1 + p")
+    plt.plot(lambdas, output_experimental, "^-", label=experimental_label)
     plt.plot(lambdas, lambdas, "--", label="Входная интенсивность λ")
     plt.xlabel("λ")
     plt.ylabel("Интенсивность успешных передач λ_out")
